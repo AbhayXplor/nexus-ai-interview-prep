@@ -2,7 +2,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 // Analyze the interview session
-export const getDeepAnalysis = async (code: string, transcript: string, context: string) => {
+export const getDeepAnalysis = async (code: string, transcript: string, context: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: "gemini-3-pro-preview",
@@ -17,13 +17,11 @@ export const getDeepAnalysis = async (code: string, transcript: string, context:
     
     Provide a detailed critique of the candidate's technical skills, communication clarity, and alignment with their stated background.`,
   });
-  return response.text;
+  return response.text || "Analysis could not be generated at this time.";
 };
 
 /**
  * Research the candidate's professional profiles.
- * If search grounding fails (e.g., 403 Permission Denied), fallback to a generic summary 
- * to ensure the app flow isn't broken.
  */
 export const researchCandidate = async (linkedInUrl: string, githubUrl: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -61,34 +59,36 @@ export const researchCandidate = async (linkedInUrl: string, githubUrl: string) 
   } catch (error: any) {
     console.warn("Search grounding failed, proceeding with restricted context.", error);
     
-    // Check for specific permission issues
     if (error?.status === 403 || error?.message?.includes('403')) {
       return {
         text: `Search Grounding Permission Denied. Proceeding with user-provided links:
         - LinkedIn: ${linkedInUrl}
         - GitHub: ${githubUrl}
-        Note: Deep profile synthesis was bypassed due to API restrictions.`,
+        Note: Deep profile synthesis was bypassed due to API restrictions. Ensure your Gemini API key is linked to a paid billing account for Search features.`,
         sources: []
       };
     }
     
-    throw error; // Re-throw if it's a different kind of error
+    return {
+      text: "Research failed due to technical constraints. Using provided profile links as context.",
+      sources: []
+    };
   }
 };
 
 // Static code analysis
-export const runStaticAnalysis = async (code: string) => {
+export const runStaticAnalysis = async (code: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
     contents: `Perform a senior-level code review on the following snippet. Highlight bugs, performance bottlenecks, and security concerns:
     ${code}`,
   });
-  return response.text;
+  return response.text || "No analysis available.";
 };
 
 // Technical documentation search
-export const searchTechnicalDocs = async (query: string) => {
+export const searchTechnicalDocs = async (query: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
@@ -98,7 +98,7 @@ export const searchTechnicalDocs = async (query: string) => {
     },
   });
   
-  let result = response.text || '';
+  let result = response.text || 'No documentation found.';
   const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
   if (chunks && chunks.length > 0) {
     result += '\n\nSources:';

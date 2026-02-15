@@ -1,7 +1,6 @@
 
 import { GoogleGenAI, Modality, Blob } from '@google/genai';
 
-// Fix: Implemented manual encode function following SDK guidelines
 function encode(bytes: Uint8Array) {
   let binary = '';
   const len = bytes.byteLength;
@@ -11,7 +10,6 @@ function encode(bytes: Uint8Array) {
   return btoa(binary);
 }
 
-// Fix: Implemented manual decode function following SDK guidelines
 function decode(base64: string) {
   const binaryString = atob(base64);
   const len = binaryString.length;
@@ -30,7 +28,6 @@ export interface LiveHandlers {
 }
 
 export const connectToLiveAI = async (handlers: LiveHandlers, systemInstruction: string) => {
-  // Fix: Ensure GoogleGenAI is initialized with named parameter and direct process.env.API_KEY access
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -51,13 +48,11 @@ export const connectToLiveAI = async (handlers: LiveHandlers, systemInstruction:
             int16[i] = inputData[i] * 32768;
           }
           
-          // Fix: Use the custom encode function for PCM audio data
           const pcmBlob: Blob = {
             data: encode(new Uint8Array(int16.buffer)),
             mimeType: 'audio/pcm;rate=16000',
           };
           
-          // CRITICAL: Solely rely on sessionPromise resolves to send input
           sessionPromise.then(session => {
             session.sendRealtimeInput({ media: pcmBlob });
           });
@@ -67,16 +62,15 @@ export const connectToLiveAI = async (handlers: LiveHandlers, systemInstruction:
         scriptProcessor.connect(audioContext.destination);
       },
       onmessage: async (message) => {
-        // Fix: Use the custom decode function for incoming audio bytes
         const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
         if (base64Audio) {
           handlers.onAudioData(decode(base64Audio));
         }
         
         if (message.serverContent?.outputTranscription) {
-          handlers.onTranscription(message.serverContent.outputTranscription.text, false);
+          handlers.onTranscription(message.serverContent.outputTranscription.text || '', false);
         } else if (message.serverContent?.inputTranscription) {
-          handlers.onTranscription(message.serverContent.inputTranscription.text, true);
+          handlers.onTranscription(message.serverContent.inputTranscription.text || '', true);
         }
         
         if (message.serverContent?.interrupted) {

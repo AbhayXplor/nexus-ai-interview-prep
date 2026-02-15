@@ -71,7 +71,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
     const instruction = `You are Nexus AI, a senior software engineer conducting a mock technical interview to help a candidate practice.
     
     CANDIDATE PROFILE SUMMARY (RESEARCHED):
-    ${state.candidateSummary}
+    ${state.candidateSummary || "Candidate background research pending."}
     
     GOAL:
     1. Greet them by name if found, and mention a specific GitHub project or skill found during research.
@@ -105,14 +105,15 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `You are Nexus AI, a technical interview coach. Respond to the candidate's implementation logic.
-        Candidate Research Data: ${state.candidateSummary}
+        Candidate Research Data: ${state.candidateSummary || "None"}
         Current Code: ${currentCode}
         Message History: ${state.messages.slice(-5).map(m => m.sender + ": " + m.text).join('\n')}
         New Message: ${text}`,
       });
       
-      if (response.text) {
-        addMessage(response.text, 'INTERVIEWER');
+      const aiText = response.text;
+      if (aiText) {
+        addMessage(aiText, 'INTERVIEWER');
       }
     } catch (e) {
       console.error("Failed to get text response", e);
@@ -143,14 +144,22 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setSearchResult('Searching technical mock docs...');
-    const result = await searchTechnicalDocs(searchQuery);
-    setSearchResult(result);
+    try {
+      const result = await searchTechnicalDocs(searchQuery);
+      setSearchResult(result);
+    } catch (e) {
+      setSearchResult('Search failed. Check your API key and connection.');
+    }
   };
 
   const handleDebug = async () => {
-    setDebugResult('Analyzing code for potential mock interview regessions...');
-    const result = await runStaticAnalysis(state.files[state.activeFileIndex].content);
-    setDebugResult(result);
+    setDebugResult('Analyzing code for potential mock interview regressions...');
+    try {
+      const result = await runStaticAnalysis(state.files[state.activeFileIndex].content);
+      setDebugResult(result);
+    } catch (e) {
+      setDebugResult('Code analysis failed.');
+    }
   };
 
   return (
