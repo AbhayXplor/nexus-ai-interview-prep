@@ -45,4 +45,4 @@ graph TD
 - **Philosophy**: Minimalist, professional, and focus-driven.
 
 ## ⚖️ License
-MIT License - Copyright (c) 2024 Nexus AI Prep.
+MIT License
