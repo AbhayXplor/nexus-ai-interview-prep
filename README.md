@@ -27,21 +27,17 @@ graph TD
     H --> I[Performance Analysis Report]
 ```
 
-## 💻 Setup
+## ☁️ Deployment (Vercel)
 
-Nexus requires an environment with access to the Google Gemini API.
+1. **Push to GitHub**: Upload this directory to a new repository.
+2. **Import to Vercel**: Choose the "Vite" framework preset.
+3. **Environment Variables**: Add `API_KEY` in the Vercel project settings. Use a Gemini API key from a project with **billing enabled** to ensure Search Grounding features work.
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/your-username/nexus-ai-interview-prep.git
-   cd nexus-ai-interview-prep
-   ```
+## 💻 Local Development
 
-2. **Environment Configuration**:
-   Ensure your hosting provider (e.g., Vercel, Netlify) has a valid `process.env.API_KEY` configured.
-
-3. **Deploy**:
-   The application is optimized for static deployment with ES6 module support.
+1. **Install dependencies**: `npm install`
+2. **Set Environment Variable**: `export API_KEY=your_key_here`
+3. **Run dev server**: `npm run dev`
 
 ## 🎨 Design Language
 - **Accent**: `#00A3FF` (Nexus Blue)
