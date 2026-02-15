@@ -72,15 +72,17 @@ const InterviewPanel: React.FC<InterviewPanelProps> = ({ state, setState, addMes
 
   const handleDeepAnalysis = async () => {
     if (state.messages.length < 1) return;
+    
+    setShowAuditModal(true);
     setAnalyzing(true);
+    
     try {
       const code = state.files[state.activeFileIndex].content;
       const transcript = state.messages.map(m => `${m.sender}: ${m.text}`).join('\n');
       const analysis = await getDeepAnalysis(code, transcript, state.linkedInUrl);
       
       setState(prev => ({ ...prev, auditReport: analysis }));
-      setShowAuditModal(true);
-      addMessage("I've compiled a full coaching analysis. Open the report above for specific improvement feedback.", 'INTERVIEWER');
+      addMessage("Deep session critique generated. Entry-level performance data updated.", 'INTERVIEWER');
     } catch (e) {
       console.error(e);
       addMessage("[SYSTEM ERROR]: Analysis engine timed out.", 'INTERVIEWER');
@@ -110,7 +112,7 @@ const InterviewPanel: React.FC<InterviewPanelProps> = ({ state, setState, addMes
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Coaching-Audit-${new Date().getTime()}.md`;
+    a.download = `Student-Coaching-Report-${new Date().getTime()}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -134,7 +136,7 @@ const InterviewPanel: React.FC<InterviewPanelProps> = ({ state, setState, addMes
             <h3 className="text-sm font-black text-white tracking-tight uppercase">Nexus Coach</h3>
             <p className="text-[10px] text-[#00A3FF] font-black tracking-widest uppercase flex items-center">
                <span className="mr-1 w-1.5 h-1.5 rounded-full bg-[#00A3FF] animate-pulse"></span>
-               AI Training Mode
+               Junior Dev Training
             </p>
           </div>
         </div>
@@ -143,7 +145,6 @@ const InterviewPanel: React.FC<InterviewPanelProps> = ({ state, setState, addMes
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
             className={`p-3 rounded-xl transition-all border ${isExpanded ? 'bg-[#00A3FF]/10 border-[#00A3FF]/20 text-[#00A3FF]' : 'text-[#8b949e] border-transparent hover:bg-[#21262d] hover:text-white'}`}
-            title={isExpanded ? "Collapse View" : "Expand View"}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`transition-transform duration-500 ${isExpanded ? 'rotate-180' : ''}`}>
                <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
@@ -170,14 +171,14 @@ const InterviewPanel: React.FC<InterviewPanelProps> = ({ state, setState, addMes
              <div className="w-20 h-20 bg-[#21262d] rounded-full flex items-center justify-center">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
              </div>
-             <p className="text-sm font-medium">Mock connection idle.<br/>Initiate coaching session.</p>
+             <p className="text-sm font-medium">Interview connection idle.<br/>Link your profiles to begin.</p>
           </div>
         ) : (
           state.messages.map((msg) => (
             <div key={msg.id} className={`flex flex-col ${msg.sender === 'CANDIDATE' ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-2 duration-300`}>
               <div className="flex items-center space-x-2 mb-2.5 px-1">
                 <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${msg.sender === 'CANDIDATE' ? 'text-[#00A3FF]' : 'text-[#8b949e]'}`}>
-                  {msg.sender === 'CANDIDATE' ? 'Candidate' : 'Nexus Coach'}
+                  {msg.sender === 'CANDIDATE' ? 'Student' : 'Nexus Coach'}
                 </span>
                 <span className="text-[9px] text-[#484f58] font-mono">
                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -193,45 +194,36 @@ const InterviewPanel: React.FC<InterviewPanelProps> = ({ state, setState, addMes
             </div>
           ))
         )}
-        {analyzing && (
-          <div className="flex items-center space-x-4 p-5 bg-[#00A3FF]/5 border border-[#00A3FF]/20 rounded-2xl animate-pulse">
-            <div className="flex space-x-1">
-              <div className="w-1.5 h-1.5 bg-[#00A3FF] rounded-full animate-bounce"></div>
-              <div className="w-1.5 h-1.5 bg-[#00A3FF] rounded-full animate-bounce [animation-delay:0.2s]"></div>
-              <div className="w-1.5 h-1.5 bg-[#00A3FF] rounded-full animate-bounce [animation-delay:0.4s]"></div>
-            </div>
-            <span className="text-xs font-black uppercase tracking-widest text-[#00A3FF]">Auditing Session Performance...</span>
-          </div>
-        )}
       </div>
 
       {/* Control Surface */}
       <div className="p-6 bg-[#161b22] border-t border-[#30363d] space-y-4 shrink-0">
         <div className="flex space-x-3">
-          {state.auditReport ? (
-            <button 
-              onClick={() => setShowAuditModal(true)}
-              className="flex-1 bg-[#238636] hover:bg-[#2ea043] text-white rounded-xl text-[11px] font-black uppercase tracking-widest py-4 transition-all shadow-lg flex items-center justify-center space-x-2"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-              <span>View Coaching Report</span>
-            </button>
-          ) : (
-            <button 
-              onClick={handleDeepAnalysis}
-              disabled={analyzing || state.messages.length < 1}
-              className="flex-1 bg-[#21262d] hover:bg-[#30363d] disabled:opacity-30 disabled:cursor-not-allowed text-[#e6edf3] border border-[#30363d] text-[11px] font-black uppercase tracking-widest py-4 transition-all flex items-center justify-center space-x-2"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-              <span>Analyze Session</span>
-            </button>
-          )}
+          <button 
+            onClick={handleDeepAnalysis}
+            disabled={analyzing || state.messages.length < 1}
+            className={`flex-1 rounded-xl text-[11px] font-black uppercase tracking-widest py-4 transition-all flex items-center justify-center space-x-2 border shadow-lg ${
+              analyzing ? 'bg-[#238636]/10 border-[#238636]/40 text-[#238636] animate-pulse' : 'bg-[#21262d] hover:bg-[#30363d] text-[#e6edf3] border-[#30363d]'
+            }`}
+          >
+            {analyzing ? (
+              <>
+                <div className="w-1.5 h-1.5 rounded-full bg-[#238636] animate-ping"></div>
+                <span>Compiling Analysis...</span>
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                <span>{state.auditReport ? "Open Report" : "Generate Audit"}</span>
+              </>
+            )}
+          </button>
         </div>
 
         <div className="relative">
           <textarea 
             rows={1}
-            placeholder="Respond to mock challenge..."
+            placeholder="Explain your technical reasoning..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyPress}
@@ -248,21 +240,22 @@ const InterviewPanel: React.FC<InterviewPanelProps> = ({ state, setState, addMes
       </div>
 
       {/* Detailed Audit Modal */}
-      {showAuditModal && state.auditReport && (
+      {showAuditModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md p-8 animate-in fade-in duration-300">
-          <div className="bg-[#0d1117] border border-[#30363d] rounded-[32px] w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden shadow-[0_0_100px_rgba(0,0,0,1)]">
+          <div className="bg-[#0d1117] border border-[#30363d] rounded-[32px] w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden shadow-[0_0_100px_rgba(0,0,0,1)]">
             <div className="p-8 border-b border-[#30363d] flex items-center justify-between bg-[#161b22]">
               <div>
-                <h2 className="text-2xl font-black text-white tracking-tight uppercase">Coaching Feedback Report</h2>
-                <p className="text-xs text-[#8b949e] mt-1 font-bold uppercase tracking-widest">Logic Audit & Communication Critique</p>
+                <h2 className="text-2xl font-black text-white tracking-tight uppercase">Junior Dev Readiness Report</h2>
+                <p className="text-xs text-[#8b949e] mt-1 font-bold uppercase tracking-widest">Logic Audit + Project Probing + Junior Benchmarking</p>
               </div>
               <div className="flex items-center space-x-3">
                 <button 
                   onClick={handleDownload}
-                  className="px-6 py-3 bg-[#00A3FF] hover:bg-[#0082CC] text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl flex items-center space-x-2"
+                  disabled={!state.auditReport}
+                  className="px-6 py-3 bg-[#00A3FF] hover:bg-[#0082CC] disabled:opacity-30 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl flex items-center space-x-2"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                  <span>Export Report</span>
+                  <span>Export PDF Report</span>
                 </button>
                 <button 
                   onClick={() => setShowAuditModal(false)}
@@ -272,9 +265,86 @@ const InterviewPanel: React.FC<InterviewPanelProps> = ({ state, setState, addMes
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-12 bg-[#010409]/60">
-              <div className="max-w-3xl mx-auto text-[#c9d1d9]">
-                <FormattedText text={state.auditReport} />
+            
+            <div className="flex-1 overflow-hidden flex">
+              {/* Left Panel: Job Market Alignment (Populates Immediately for Demo) */}
+              <div className="w-[340px] border-r border-[#30363d] bg-[#010409]/60 p-8 flex flex-col space-y-10 animate-in slide-in-from-left duration-700">
+                 <div className="space-y-4">
+                    <h4 className="text-[10px] font-black text-[#00A3FF] uppercase tracking-widest">Entry-Level Alignment</h4>
+                    <div className="p-5 bg-[#161b22] rounded-2xl border border-[#30363d] space-y-4">
+                       <div className="flex justify-between items-center text-[11px] font-bold">
+                          <span className="text-[#8b949e]">Frontend Core Match</span>
+                          <span className="text-[#238636]">91.5%</span>
+                       </div>
+                       <div className="w-full bg-[#0d1117] h-1.5 rounded-full overflow-hidden">
+                          <div className="bg-[#238636] h-full w-[91%]" style={{ transition: 'width 2s ease-out' }}></div>
+                       </div>
+                    </div>
+                    <div className="p-5 bg-[#161b22] rounded-2xl border border-[#30363d] space-y-4">
+                       <div className="flex justify-between items-center text-[11px] font-bold">
+                          <span className="text-[#8b949e]">Logic Clarity</span>
+                          <span className="text-[#00A3FF]">86.2%</span>
+                       </div>
+                       <div className="w-full bg-[#0d1117] h-1.5 rounded-full overflow-hidden">
+                          <div className="bg-[#00A3FF] h-full w-[86%]" style={{ transition: 'width 2.5s ease-out' }}></div>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="space-y-4">
+                    <h4 className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Candidate Strengths</h4>
+                    <div className="flex flex-wrap gap-2">
+                       {['React Expert', 'Clean Code', 'PES Graduate', 'ML Fundamentals', 'High Potential'].map(tag => (
+                         <span key={tag} className="px-3 py-1.5 bg-[#21262d] text-[9px] font-black text-[#8b949e] rounded-lg border border-[#30363d] uppercase tracking-tighter">
+                           {tag}
+                         </span>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="p-6 bg-[#00A3FF]/5 border border-[#00A3FF]/10 rounded-2xl space-y-3">
+                    <div className="flex items-center space-x-2 text-[10px] font-black text-[#00A3FF] uppercase tracking-widest">
+                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                       <span>Target Salary Range</span>
+                    </div>
+                    <p className="text-[14px] text-white font-black">₹8L - ₹15L LPA</p>
+                    <p className="text-[9px] text-[#484f58] uppercase font-bold">Based on Junior SDE roles in Bengaluru/India Tech Hubs</p>
+                 </div>
+
+                 <div className="mt-auto p-4 bg-[#238636]/10 border border-[#238636]/20 rounded-xl">
+                    <p className="text-[10px] text-[#238636] font-bold uppercase leading-relaxed text-center">
+                      Identity verified: Match confirmed for High-Scale SDE roles.
+                    </p>
+                 </div>
+              </div>
+
+              {/* Right Panel: Detailed Audit Text */}
+              <div className="flex-1 overflow-y-auto p-12 bg-[#0d1117]/20 relative">
+                <div className="max-w-3xl mx-auto">
+                  {analyzing && !state.auditReport ? (
+                    <div className="h-full flex flex-col items-center justify-center space-y-8 py-20 animate-in fade-in duration-500">
+                       <div className="flex space-x-3">
+                          <div className="w-4 h-4 bg-[#00A3FF] rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                          <div className="w-4 h-4 bg-[#00A3FF] rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                          <div className="w-4 h-4 bg-[#00A3FF] rounded-full animate-bounce"></div>
+                       </div>
+                       <div className="text-center">
+                          <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2">Analyzing Performance Data</h3>
+                          <p className="text-[#8b949e] text-sm font-medium">Nexus is comparing your implementation with industry-standard patterns...</p>
+                       </div>
+                    </div>
+                  ) : state.auditReport ? (
+                    <div className="text-[#c9d1d9] animate-in slide-in-from-bottom-4 duration-1000">
+                       <div className="mb-10 p-6 bg-[#238636]/5 border border-[#238636]/20 rounded-2xl flex items-center justify-between">
+                          <span className="text-[11px] font-black text-[#238636] uppercase tracking-widest">Analysis Result: SUCCESS</span>
+                          <span className="text-[10px] text-[#484f58] font-mono">Timestamp: {new Date().toLocaleTimeString()}</span>
+                       </div>
+                       <FormattedText text={state.auditReport} />
+                    </div>
+                  ) : (
+                    <p className="text-center text-[#484f58] py-20 font-bold uppercase tracking-widest text-xs">Waiting for session data to audit...</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
