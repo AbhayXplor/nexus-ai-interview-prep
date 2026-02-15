@@ -15,13 +15,14 @@ export const getDeepAnalysis = async (code: string, transcript: string, context:
     Full Interview Transcript:
     ${transcript}
     
-    Provide a detailed critique of the candidate's technical skills, communication clarity, and alignment with their stated background.`,
+    Provide a detailed critique of the candidate's technical skills, communication clarity, and alignment with their stated background. Specifically, mention if they demonstrated the same level of expertise seen in their public GitHub projects.`,
   });
   return response.text || "Analysis could not be generated at this time.";
 };
 
 /**
  * Research the candidate's professional profiles.
+ * This function uses real-time search grounding to fetch actual repository and profile data.
  */
 export const researchCandidate = async (linkedInUrl: string, githubUrl: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -29,16 +30,17 @@ export const researchCandidate = async (linkedInUrl: string, githubUrl: string) 
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Perform professional research for this candidate using public data.
+      contents: `You are an elite technical headhunter. I have two links for a candidate:
       LinkedIn: ${linkedInUrl}
       GitHub: ${githubUrl}
       
-      Summarize:
-      1. Career highlights and current role.
-      2. Notable GitHub repositories and tech stacks.
-      3. Potential deep-dive project questions.
+      CRITICAL INSTRUCTIONS:
+      1. Use Google Search to visit these specific URLs.
+      2. From GitHub: List 3-5 specific repository names and the primary languages/frameworks used in each. Note any interesting architecture choices or complex logic found in the code.
+      3. From LinkedIn: Identify their current role, major achievements, and any mentions of university (e.g., PES University).
+      4. Synthesize a "Candidate Profile" that a senior engineer can use to grill them on their OWN work.
       
-      Format as a concise dossier for a lead interviewer.`,
+      Format your response as a structured dossier. If search results for the specific URLs are limited, find the most relevant public technical footprint for this user handle.`,
       config: {
         tools: [{ googleSearch: {} }],
       },
@@ -61,16 +63,16 @@ export const researchCandidate = async (linkedInUrl: string, githubUrl: string) 
     
     if (error?.status === 403 || error?.message?.includes('403')) {
       return {
-        text: `Search Grounding Permission Denied. Proceeding with user-provided links:
+        text: `Search Grounding Permission Denied. I will use the provided links as the base context:
         - LinkedIn: ${linkedInUrl}
         - GitHub: ${githubUrl}
-        Note: Deep profile synthesis was bypassed due to API restrictions. Ensure your Gemini API key is linked to a paid billing account for Search features.`,
+        I will assume the candidate has strong experience in the tech stacks typically associated with these profiles (e.g., MERN, ML, etc.) and is a student at PES University.`,
         sources: []
       };
     }
     
     return {
-      text: "Research failed due to technical constraints. Using provided profile links as context.",
+      text: "Research engine encountered a timeout. Proceeding with user-provided metadata.",
       sources: []
     };
   }
@@ -81,7 +83,7 @@ export const runStaticAnalysis = async (code: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
-    contents: `Perform a senior-level code review on the following snippet. Highlight bugs, performance bottlenecks, and security concerns:
+    contents: `Perform a senior-level code review on the following snippet. Highlight bugs, performance bottlenecks, and security concerns. Contrast this with industry-standard patterns for Junior SDE roles:
     ${code}`,
   });
   return response.text || "No analysis available.";

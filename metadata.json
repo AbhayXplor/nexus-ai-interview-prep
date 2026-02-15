@@ -1,6 +1,6 @@
 {
-  "name": "Nexus AI Interviewer-V2",
-  "description": "A world-class AI-powered technical interview preparation platform featuring real-time voice interaction, live coding workspace, and deep analysis of candidate performance.",
+  "name": "Nexus AI Interview Prep",
+  "description": "A world-class AI-powered technical interview preparation platform featuring real-time voice interaction, live coding workspace, and deep analysis of candidate performance based on your actual GitHub and LinkedIn identity.",
   "requestFramePermissions": [
     "camera",
     "microphone"

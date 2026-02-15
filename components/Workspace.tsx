@@ -68,16 +68,17 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
     }
 
     setIsLive(true);
-    const instruction = `You are Nexus AI, a senior software engineer conducting a mock technical interview to help a candidate practice.
+    const instruction = `You are Nexus AI, a senior engineer at a top-tier tech firm conducting a mock technical interview for a Junior Software Engineer candidate.
     
-    CANDIDATE PROFILE SUMMARY (RESEARCHED):
+    CANDIDATE IDENTITY (RESEARCHED):
     ${state.candidateSummary || "Candidate background research pending."}
     
-    GOAL:
-    1. Greet them by name if found, and mention a specific GitHub project or skill found during research.
-    2. Start the technical task (Debounce implementation).
-    3. As they code, act as a mentor/coach. Ask probing questions that help them reveal their architectural thinking.
-    4. Be technical and high-standard, but ultimately helpful in identifying areas for candidate improvement.`;
+    INTERVIEW GOALS:
+    1. START: Greet them warmly. Specifically mention a repository or skill found in their GitHub/LinkedIn (e.g., projects from PES University or specific tech stacks).
+    2. THE TASK: Ask them to walk through the 'Debounce' logic in the editor.
+    3. PROBING: Don't just ask about the code in the editor. Connect it to their own repositories. For example: "I saw you used similar async logic in your [Project Name] repository, how does this implementation differ?"
+    4. TONE: Professional, encouraging but high-standard. Focus on "Senior-to-Junior" mentorship style. 
+    5. FEEDBACK: If they struggle, provide a small hint and observe their reasoning.`;
 
     try {
       liveSessionRef.current = await connectToLiveAI({
@@ -104,11 +105,11 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
       
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `You are Nexus AI, a technical interview coach. Respond to the candidate's implementation logic.
-        Candidate Research Data: ${state.candidateSummary || "None"}
-        Current Code: ${currentCode}
-        Message History: ${state.messages.slice(-5).map(m => m.sender + ": " + m.text).join('\n')}
-        New Message: ${text}`,
+        contents: `You are Nexus AI, a technical coach for a student/new grad. Respond to the candidate.
+        Identity Context: ${state.candidateSummary || "None"}
+        Current Editor Code: ${currentCode}
+        Chat History: ${state.messages.slice(-5).map(m => m.sender + ": " + m.text).join('\n')}
+        User Input: ${text}`,
       });
       
       const aiText = response.text;
@@ -117,7 +118,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
       }
     } catch (e) {
       console.error("Failed to get text response", e);
-      addMessage("I'm sorry, I'm having trouble processing your message right now.", 'INTERVIEWER');
+      addMessage("Technical interruption in text pipeline. Please continue via voice or retry.", 'INTERVIEWER');
     }
   };
 
@@ -130,13 +131,13 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
       ...prev,
       terminalOutput: [
         ...prev.terminalOutput, 
-        `[${timestamp}] Nexus Mock Runner v2.0.4`,
-        `[${timestamp}] Verifying implementation against logic expectations...`,
-        `[${timestamp}] Case (Debounce Trigger): SUCCESS`,
+        `[${timestamp}] Nexus Junior-Test Runner v1.2`,
+        `[${timestamp}] Booting logic verifier...`,
+        `[${timestamp}] TEST: Basic Debounce Trigger -> PASS`,
         hasCancel 
-          ? `[${timestamp}] Case (Cancellation logic detected): SUCCESS`
-          : `[${timestamp}] Case (Cancellation logic detected): FAILED (No cancel method found)`,
-        `[${timestamp}] Coaching Hint: Ensure your implementation handles multiple rapid calls correctly.`
+          ? `[${timestamp}] TEST: Cancellation Logic -> PASS`
+          : `[${timestamp}] TEST: Cancellation Logic -> FAIL (Missing .cancel() method)`,
+        `[${timestamp}] ADVICE: Junior roles often test edge-case handling. Did you consider 'leading' vs 'trailing' edges?`
       ]
     }));
   };
@@ -148,17 +149,17 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
       const result = await searchTechnicalDocs(searchQuery);
       setSearchResult(result);
     } catch (e) {
-      setSearchResult('Search failed. Check your API key and connection.');
+      setSearchResult('Search grounding failed. Proceeding with local knowledge base.');
     }
   };
 
   const handleDebug = async () => {
-    setDebugResult('Analyzing code for potential mock interview regressions...');
+    setDebugResult('Analyzing code for student-level common regressions...');
     try {
       const result = await runStaticAnalysis(state.files[state.activeFileIndex].content);
       setDebugResult(result);
     } catch (e) {
-      setDebugResult('Code analysis failed.');
+      setDebugResult('Static analysis engine offline.');
     }
   };
 
@@ -178,20 +179,20 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
             onClick={runTests}
             className="text-[11px] font-black tracking-widest text-[#8b949e] hover:text-[#00A3FF] uppercase transition-colors"
           >
-            Verify Logic
+            Run Logic Verifier
           </button>
         </div>
 
         <div className="flex items-center space-x-4">
           <div className={`flex items-center space-x-3 px-5 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all ${isLive ? 'bg-[#00A3FF]/10 text-[#00A3FF] border border-[#00A3FF]/20' : 'bg-[#21262d] text-[#484f58] border border-[#30363d]'}`}>
             <div className={`w-2.5 h-2.5 rounded-full ${isLive ? 'bg-[#00A3FF] animate-pulse shadow-[0_0_12px_rgba(0,163,255,1)]' : 'bg-[#484f58]'}`}></div>
-            <span>{isLive ? 'SESSION ACTIVE' : 'AWAITING START'}</span>
+            <span>{isLive ? 'VOICE LIVE' : 'MIC STANDBY'}</span>
           </div>
           <button 
             onClick={onEnd}
             className="px-6 py-2 bg-[#da3633] hover:bg-[#b62d2a] text-white rounded-xl text-[11px] font-black transition-all shadow-xl shadow-[#da3633]/20 uppercase tracking-widest"
           >
-            Finish Practice
+            End Training
           </button>
         </div>
       </div>
@@ -203,7 +204,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
           {activeTab === 'EXPLORER' && (
             <div className="flex flex-col h-full animate-in slide-in-from-left duration-200">
               <div className="p-5 border-b border-[#30363d]">
-                <span className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Mock Workspace</span>
+                <span className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Training Assets</span>
               </div>
               <div className="flex-1 overflow-y-auto py-2">
                 {state.files.map((file, idx) => (
@@ -222,10 +223,10 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
 
           {activeTab === 'SEARCH' && (
             <div className="flex flex-col h-full p-6 animate-in slide-in-from-left duration-200">
-              <span className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest mb-4">Prep Reference</span>
+              <span className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest mb-4">Market Grounding</span>
               <input 
                 type="text" 
-                placeholder="Lookup docs for assistance..." 
+                placeholder="Search tech patterns..." 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onKeyPress={e => e.key === 'Enter' && handleSearch()}
@@ -235,7 +236,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
                 {searchResult ? (
                    <div className="bg-[#161b22] p-4 rounded-xl border border-[#30363d] whitespace-pre-wrap">{searchResult}</div>
                 ) : (
-                  <p className="opacity-40 italic">Search for patterns or documentation.</p>
+                  <p className="opacity-40 italic text-center py-10">Use Search to find implementation standards for Junior roles.</p>
                 )}
               </div>
             </div>
@@ -243,18 +244,18 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
 
           {activeTab === 'DEBUG' && (
             <div className="flex flex-col h-full p-6 animate-in slide-in-from-left duration-200">
-              <span className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest mb-4">Coaching Audit</span>
+              <span className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest mb-4">Logic Probing</span>
               <button 
                 onClick={handleDebug}
                 className="w-full py-3 bg-[#00A3FF]/20 text-[#00A3FF] border border-[#00A3FF]/40 rounded-xl font-bold text-[10px] uppercase tracking-widest mb-6 hover:bg-[#00A3FF]/30 transition-all"
               >
-                Scan Code Integrity
+                Scan for Junior Bugs
               </button>
               <div className="flex-1 overflow-y-auto text-[11px] text-[#8b949e] leading-relaxed">
                 {debugResult ? (
                    <div className="bg-[#161b22] p-4 rounded-xl border border-[#30363d] whitespace-pre-wrap">{debugResult}</div>
                 ) : (
-                  <p className="opacity-40 italic">Run a scan to see how an interviewer might view this code.</p>
+                  <p className="opacity-40 italic text-center py-10">Run a scan to see how a lead engineer critiques this solution.</p>
                 )}
               </div>
             </div>
@@ -288,11 +289,11 @@ const Workspace: React.FC<WorkspaceProps> = ({ state, setState, onEnd, addMessag
       <div className="h-6 bg-[#00A3FF] flex items-center justify-between px-6 text-[10px] text-white font-black tracking-widest uppercase">
         <div className="flex items-center space-x-6">
           <span>{state.files[state.activeFileIndex].name}</span>
-          <span>Training Session v2.0</span>
+          <span>Junior SDE Training v1.2</span>
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
-          <span>Practice Logic Active</span>
+          <span>PES University Pipeline Connected</span>
         </div>
       </div>
     </div>

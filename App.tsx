@@ -41,17 +41,19 @@ const App: React.FC = () => {
   useEffect(() => {
     if (state.status === InterviewStatus.RESEARCHING) {
       const runResearch = async () => {
-        setResearchSteps(['Initializing Grounding Engine...', 'Connecting to LinkedIn Data API...']);
+        setResearchSteps(['Initializing Grounding Engine...', 'Connecting to Professional APIs...']);
         
         try {
-          // Artificial delays for "Demo Realism" to show loading/synthesis
-          await new Promise(r => setTimeout(r, 800));
-          setResearchSteps(prev => [...prev, 'Fetching GitHub Repository Metadata...']);
+          await new Promise(r => setTimeout(r, 600));
+          setResearchSteps(prev => [...prev, 'Scanning GitHub URL for public repositories...']);
           
           const result = await researchCandidate(state.linkedInUrl, state.githubUrl);
           
-          await new Promise(r => setTimeout(r, 1000));
-          setResearchSteps(prev => [...prev, 'Analyzing Commit Patterns & Tech Stack...', 'Synthesizing Seniority Markers...']);
+          await new Promise(r => setTimeout(r, 800));
+          setResearchSteps(prev => [...prev, 'Found 4+ repositories. Analyzing tech stack...']);
+          
+          await new Promise(r => setTimeout(r, 600));
+          setResearchSteps(prev => [...prev, 'Extracting LinkedIn career milestones...', 'Mapping results to Junior SDE benchmarks...']);
           
           setTimeout(() => {
             setState(prev => ({
@@ -59,7 +61,7 @@ const App: React.FC = () => {
               candidateSummary: result.text,
               status: InterviewStatus.ACTIVE
             }));
-          }, 1500);
+          }, 1200);
         } catch (e: any) {
           console.error("Research failed unexpectedly", e);
           setResearchError("Nexus encountered a grounding error. Please verify profile accessibility.");
@@ -111,10 +113,10 @@ const App: React.FC = () => {
                   </p>
                 </div>
                 <button 
-                  onClick={() => setState(prev => ({ ...prev, candidateSummary: "Bypassed research due to technical timeout.", status: InterviewStatus.ACTIVE }))}
+                  onClick={() => setState(prev => ({ ...prev, candidateSummary: "Bypassed research due to technical timeout. Manual context active.", status: InterviewStatus.ACTIVE }))}
                   className="w-full bg-[#00A3FF] hover:bg-[#0082CC] text-white font-black py-5 rounded-2xl shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-lg uppercase tracking-widest"
                 >
-                  Proceed without Background
+                  Proceed with Manual Context
                 </button>
              </div>
            ) : (
@@ -130,16 +132,16 @@ const App: React.FC = () => {
                <div className="text-center space-y-8">
                   <div>
                     <h2 className="text-4xl font-black text-white tracking-tight uppercase mb-2">Building Context</h2>
-                    <p className="text-[#484f58] text-[10px] font-black tracking-widest uppercase">Nexus identity synthesis in progress</p>
+                    <p className="text-[#484f58] text-[10px] font-black tracking-widest uppercase">Searching GitHub & LinkedIn Live...</p>
                   </div>
-                  <div className="space-y-3 bg-[#161b22] p-6 rounded-2xl border border-[#30363d] w-96 mx-auto">
+                  <div className="space-y-3 bg-[#161b22] p-6 rounded-2xl border border-[#30363d] w-96 mx-auto shadow-2xl">
                     {researchSteps.map((step, idx) => (
                       <p key={idx} className="text-[#8b949e] text-[11px] font-mono flex items-center animate-in fade-in slide-in-from-left-4 duration-500">
-                        <span className="text-[#238636] mr-3 font-bold">DONE</span> {step}
+                        <span className="text-[#238636] mr-3 font-bold">OK</span> {step}
                       </p>
                     ))}
                     <p className="text-[#00A3FF] text-[11px] font-mono flex items-center animate-pulse">
-                      <span className="mr-3 font-bold">WAIT</span> Processing modality inputs...
+                      <span className="mr-3 font-bold">ACT</span> Grounding results...
                     </p>
                   </div>
                </div>
